@@ -4,6 +4,7 @@
 
 # Bibliotecas
 import numpy as np
+from matplotlib import pyplot as plt
 
 # Dados do problema
 rho_agua = 998.2071  # Kg/m^3
@@ -40,7 +41,7 @@ n_i = 10 #Nó da interface
 y = 0.015  #comprimento de análise [m]
 dy = y/(ny-1)  #delta y [m]
 h = (n_i-1)*dy
-dt = 0.00125  #incremento de tempo [s]
+dt = 0.001  #incremento de tempo [s]
 C = dt/(dy**2)
 
 #Vetor velocidade
@@ -62,13 +63,44 @@ for t in np.arange(0, 10, dt):
             u[i] = u[i] * (1 - ((C/rho(I))*(mu(I) + mu(I)))) + u[i+1]*C/(rho(I))*mu(I) + u[i-1]*C/(rho(I))*mu(I) + dt*(rho(I)-rho_ar)*gx/rho(I)
         elif i == ny-1:
             u[i] = 0.0
-print(u)
 
 #Solução contínua
 y = np.linspace(0, 9*dy, 10) 
-u_an = rho_agua*gx/mu_agua*y*(h-y/2)
-print(u_an)
+u_an = rho_agua*gx/mu_agua*y*(h-(y/2))
 
-#Falta os plots
-#comparacao com sol. anal.
-#Verificar sol. anal. com o relatorio
+#Plots 
+plt.figure(0)
+plt.plot(u_an, y, color = 'k', label = 'Solução Analítica')
+
+plt.plot(u[:10], y, color = 'b',  label = 'Solução Numérica')
+
+x_agua = np.linspace(0, 1.90, 10)
+h_agua = np.ones(10)
+h_agua = h_agua * h
+plt.plot(x_agua, h_agua, color = 'k', linestyle = '--', label = 'Altura da lâmina de água')
+
+plt.xlabel('Velocidade [m/s]')
+plt.ylabel('Altura [m]')
+plt.title('Velocidade na região líquida')
+
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#Erro Absoluto - Comparação entre as duas soluções
+erro = np.zeros(n_i)
+for i in range(n_i):
+    erro[i] = u_an[i] - u[i]
+    erro [i] = np.abs(erro[i])
+
+#Plot do erro absoluto
+h_lam = np.linspace(0, h, 10)
+
+plt.figure(1)
+plt.plot(h_lam, erro, marker = 'o')
+plt.xlabel('Altura da lâmina de água')
+plt.ylabel('Erro absoluto')
+plt.title('Comparação entre a solução analítica e numérica')
+
+plt.grid(True)
+plt.show()
