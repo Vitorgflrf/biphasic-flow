@@ -1,0 +1,74 @@
+# Escoamento bifásico unidimensional transiente
+# Água escoa em um plano inclinado que arrasta o ar
+# Deseja-se os campos de velocidades para os dois fluidos
+
+# Bibliotecas
+import numpy as np
+
+# Dados do problema
+rho_agua = 998.2071  # Kg/m^3
+mu_agua = 1.003e-3  # Kg/m^3
+rho_ar = 1.204  # Kg/m^3
+mu_ar = 17.4e-6  # Kg/(m*s)
+teta = np.deg2rad(10)  #rad
+g = 9.81  # m/s^2
+gx = g*np.sin(teta)  # m/s^2
+
+#Função Indicadora Massa Específica
+def rho(I):
+    if I == 1.0:
+        r = rho_agua
+    elif I == 0.5:
+        r = 0.5*(rho_agua + rho_ar)
+    elif I == 0.0:
+        r = rho_ar
+    return r
+
+#Função Indicadora Viscosidade
+def mu(I):
+    if I == 1.0:
+        m = mu_agua
+    elif I == 0.5:
+        m = 0.5*(mu_agua + mu_ar)
+    elif I == 0.0:
+        m = mu_ar
+    return m
+
+# Discretização Espaço-Temporal
+ny = 91  #número de nós
+n_i = 10 #Nó da interface
+y = 0.015  #comprimento de análise [m]
+dy = y/(ny-1)  #delta y [m]
+h = (n_i-1)*dy
+dt = 0.00125  #incremento de tempo [s]
+C = dt/(dy**2)
+
+#Vetor velocidade
+u = np.zeros(ny)
+
+#Cálculo das velocidades pelo método explícito
+for t in np.arange(0, 10, dt):
+    for i in range(ny):
+        if i == 0:
+            u[i] = 0.0
+        elif i>0 and i< n_i-1:
+            I = 1
+            u[i] = u[i] * (1 - (C/rho(I))*(mu(I) + mu(I))) + u[i+1]*C/(rho(I))*mu(I) + u[i-1]*C/(rho(I))*mu(I) + dt*(rho(I)-rho_ar)*gx/rho(I)
+        elif i == n_i-1:
+            I = 0.5
+            u[i] = u[i] * (1 - ((C/rho(I))*(mu(I) + mu(I)))) + u[i+1]*C/(rho(I))*mu(I) + u[i-1]*C/(rho(I))*mu(I) + dt*(rho(I)-rho_ar)*gx/rho(I)
+        elif i> n_i-1 and i<ny-1:
+            I = 0
+            u[i] = u[i] * (1 - ((C/rho(I))*(mu(I) + mu(I)))) + u[i+1]*C/(rho(I))*mu(I) + u[i-1]*C/(rho(I))*mu(I) + dt*(rho(I)-rho_ar)*gx/rho(I)
+        elif i == ny-1:
+            u[i] = 0.0
+print(u)
+
+#Solução contínua
+y = np.linspace(0, 9*dy, 10) 
+u_an = rho_agua*gx/mu_agua*y*(h-y/2)
+print(u_an)
+
+#Falta os plots
+#comparacao com sol. anal.
+#Verificar sol. anal. com o relatorio
